@@ -5,11 +5,13 @@ import time
 import os
 from .response_parser import *
 from uuid import getnode as get_mac
+import logging
 
+logger = logging.getLogger(__name__)
 
-class Main:
+class SusiMain:
     def __init__(self):
-        self.api_endpoint = 'https://api.susi.ai'
+        self.base_url = 'https://api.susi.ai'
         self.access_token = None
         self.location = {'latitude': None, 'longitude': None, 'country_name': None, 'country_code': None}
         self._check_local_server()
@@ -23,18 +25,18 @@ class Main:
         try:
             chat_url = 'http://localhost:4000/susi/chat.json'
             if (requests.get(chat_url, test_params)):
-                print('connected to local server')
-                self.api_endpoint = 'http://localhost:4000'
+                logger.info('connected to local server')
+                self.base_url = 'http://localhost:4000'
         except requests.exceptions.ConnectionError:
-            print('local server is down')
+            logger.info('local server is down')
 
 
     def _check_env_variables(self):
-        if os.environ.get('api_endpoint') != None:
-            self.api_endpoint = os.environ.get('api_endpoint')
+        if os.environ.get('base_url') != None:
+            self.base_url = os.environ.get('base_url')
 
-    def use_api_endpoint(self,url):
-        self.api_endpoint = url
+    def use_base_url(self,url):
+        self.base_url = url
 
 
     def update_location(self, latitude, longitude, country_name, country_code):
@@ -61,15 +63,15 @@ class Main:
             params['country_name'] = self.location['country_name']
             params['country_code'] = self.location['country_code']
 
-        chat_url = self.api_endpoint + "/susi/chat.json"
+        chat_url = self.base_url + "/susi/chat.json"
         try:
             api_response = requests.get(chat_url, params)
         except requests.exceptions.ConnectionError:
-            if self.api_endpoint == 'http://localhost:4000' | self.api_endpoint == 'https://localhost:4000':
-                self.api_endpoint = 'https://api.susi.ai'
+            if self.base_url == 'http://localhost:4000' | self.base_url == 'https://localhost:4000':
+                self.base_url = 'https://api.susi.ai'
                 api_response = requests.get(chat_url, params)
-            elif self.api_endpoint == 'http://api.susi.ai' | self.api_endpoint == 'https://api.susi.ai':
-                self.api_endpoint = 'http://localhost:4000'
+            elif self.base_url == 'http://api.susi.ai' | self.base_url == 'https://api.susi.ai':
+                self.base_url = 'http://localhost:4000'
                 api_response = requests.get(chat_url, params)
 
         response_json = api_response.json()
@@ -134,8 +136,8 @@ class Main:
 
     def add_device(self, access_token, room_name):
 
-        get_device_info = self.api_endpoint + '/aaa/listUserSettings.json?'
-        add_device_url = self.api_endpoint + '/aaa/addNewDevice.json?'
+        get_device_info = self.base_url + '/aaa/listUserSettings.json?'
+        add_device_url = self.base_url + '/aaa/addNewDevice.json?'
         mac = get_mac()
         macid = ':'.join(("%012X"%mac)[i:i+2] for i in range(0,12,2))
 
@@ -143,17 +145,17 @@ class Main:
             'access_token':access_token
         }
 
-        # print(access_token)
+        logger.debug(access_token)
 
         if access_token is not None:
             device_info_response = requests.get(get_device_info,param1)
             device_info = device_info_response.json()
 
-        # print(device_info)
+        logger.debug(device_info)
 
         if device_info is not None:
             device = device_info['devices'] # list of existing mac ids
-            print(device)
+            logger.info(device)
             session = device_info['session'] # session info
             identity = session['identity']
             name = identity['name']
@@ -169,25 +171,24 @@ class Main:
 
             for dev in device:
                 if dev == macid:
-                    print('Device already configured')
+                    logger.info('Device already configured')
                     return
                 else :
                     adding_device = requests.post(add_device_url, params2)
-                    print(adding_device.url)
+                    logger.info(adding_device.url)
 
     def sign_in(self, email, password, room_name=None):
         params = {
             'login': email,
             'password': password
         }
-        sign_in_url = self.api_endpoint + '/aaa/login.json?type=access-token'
+        sign_in_url = self.base_url + '/aaa/login.json?type=access-token'
         api_response = requests.get(sign_in_url, params)
 
         if api_response.status_code == 200:
             response_dict = api_response.json()
             parsed_response = get_sign_in_response(response_dict)
             access_token = parsed_response.access_token
-            # print(access_token)
             if access_token is not None:
                 self.add_device(access_token, room_name)
         else:
@@ -198,7 +199,7 @@ class Main:
             'signup': email,
             'password': password
         }
-        sign_up_url = self.api_endpoint + '/aaa/signup.json'
+        sign_up_url = self.base_url + '/aaa/signup.json'
         api_response = requests.get(sign_up_url, params)
         parsed_dict = api_response.json()
         return get_sign_up_response(parsed_dict)
@@ -208,16 +209,16 @@ class Main:
         params = {
             'forgotemail': email
         }
-        forgot_password_url = self.api_endpoint + '/aaa/recoverpassword.json'
+        forgot_password_url = self.base_url + '/aaa/recoverpassword.json'
         api_response = requests.get(forgot_password_url, params)
         parsed_dict = api_response.json()
         return get_forgot_password_response(parsed_dict)
 
 
     def get_previous_responses(self):
-        memory_url = self.api_endpoint + '/susi/memory.json'
+        memory_url = self.base_url + '/susi/memory.json'
         api_response = requests.get(memory_url)
         parsed_dict = api_response.json()
         return get_memory_responses(parsed_dict)
 
-main = Main()
+susi_main = SusiMain()
