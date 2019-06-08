@@ -1,6 +1,6 @@
 from .main import susi_main
 
-use_api_endpoint = susi_main.use_base_url 
+use_api_endpoint = susi_main.use_base_url
 query = susi_main.query
 ask = susi_main.ask
 answer_from_json = susi_main.answer_from_json
