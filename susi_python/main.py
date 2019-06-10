@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class SusiMain:
+class SusiClient:
     def __init__(self):
         self.base_url = 'https://api.susi.ai'
         self.access_token = None
@@ -145,8 +145,6 @@ class SusiMain:
             'access_token':access_token
         }
 
-        logger.debug(access_token)
-
         if access_token is not None:
             device_info_response = requests.get(get_device_info,param1)
             device_info = device_info_response.json()
@@ -221,4 +219,4 @@ class SusiMain:
         parsed_dict = api_response.json()
         return get_memory_responses(parsed_dict)
 
-susi_main = SusiMain()
+susi_client = SusiClient()
