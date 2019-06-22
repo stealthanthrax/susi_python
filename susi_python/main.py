@@ -212,11 +212,11 @@ class SusiClient:
         parsed_dict = api_response.json()
         return get_forgot_password_response(parsed_dict)
 
-
     def get_previous_responses(self):
         memory_url = self.base_url + '/susi/memory.json'
         api_response = requests.get(memory_url)
-        parsed_dict = api_response.json()
-        return get_memory_responses(parsed_dict)
+        response_json = api_response.json()
+        parsed_res = get_query_response(response_json)
+        return parsed_res
 
 susi_client = SusiClient()

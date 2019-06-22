@@ -3,7 +3,12 @@ from .models import *
 
 def get_action(jsn):
     if jsn['type'] == 'answer':
-        return AnswerAction(jsn['expression'])
+        # language switching action is not an explicit one, but
+        # implicit when the action contains the "language" tag
+        if "language" in jsn:
+            return LanguageSwitchAction(jsn['language'], jsn['expression'])
+        else:
+            return AnswerAction(jsn['expression'])
     elif jsn['type'] == 'table':
         return TableAction(jsn['columns'])
     elif jsn['type'] == 'map':
@@ -26,6 +31,12 @@ def get_action(jsn):
         return MediaAction(jsn['type'])
     elif jsn['type'] == 'resume':
         return MediaAction(jsn['type'])
+    elif jsn['type'] == 'next':
+        return MediaAction(jsn['type'])
+    elif jsn['type'] == 'previous':
+        return MediaAction(jsn['type'])
+    elif jsn['type'] == 'shuffle':
+        return MediaAction(jsn['type'])
     else:
         return UnknownAction()
 
@@ -40,7 +51,6 @@ def get_query_response(parsed_dict):
 
     actions = [get_action(jsn)
                for jsn in ans['actions']]
-    print(actions[::-1])
     answer = Answer(data, metadata, actions[::-1])
 
     try:
